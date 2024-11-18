@@ -1,0 +1,90 @@
+{% extends "chat/base.html" %} {% load crispy_forms_tags %} {% block content %} {% load static %}
+<div class="d-flex h-100">
+  <div class="h-100 p-2 rounded" style="width: 30%; background-color: #f1f5fe; overflow-y: auto;">
+    <div class="m-2 mb-5" style="position: relative;">
+      <input type="text" class="form-control" placeholder="Search..">
+      <i class="bi bi-search h5" style="position: absolute;  right: 10px;
+      top:6px;"></i>
+    </div>
+    <div class="m-2 p-1 mb-5 d-flex justify-content-between">
+      <h5 style="font-weight: 800; color: blue;">Messages</h5>
+      <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal">New Chat</button>
+      <div class="modal fade" id="exampleModal">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="exampleModalLabel">Add Chat</h1>
+              <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <label for="selectedUser" class="form-label">Available Users:</label>
+              <select name="selectedUser" id="selectedUser" class="form-control">
+                {% for user in avail_users %}
+                <option value={{user.id}}>{{ user.firstname }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" id="modalCloseBtn" data-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-primary" onclick="addNewChat()">Start Chatting</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <form method="post" id="form_id">
+      <input value="100" hidden name="conv_id" id="conv_id">
+      {% csrf_token %}
+    </form>
+    {% for conversation in conversations %}
+
+    <div class="p-2 m-2 rounded d-flex chat-item" style="border: 2px solid #cadafd;" id="{{ conversation.conv_id }}"
+      onclick="clickConv(this)" role="button">
+      <img class="rounded-circle" style="max-height: 50px; max-width: 50px; vertical-align: middle;"
+        src="{{ conversation.secProfile }}">
+      <p class="m-2 pl-4" style="font-size: 14px;"><b>{{ conversation.secName }}</b></p>
+    </div>
+
+    {% endfor %}
+
+
+  </div>
+  <div class="rounded" id="chatdialogspace" style="width: 70%; background-color:#fff; overflow-y: auto;">
+    {% if not room_name %}
+    <div class="w-100 h-100 d-flex justify-content-center align-items-center" style="background: transparent url(http://192.168.1.10:9000/media/loader.gif)  center no-repeat;">
+      <img src="{{chat_img}}" class="w-100" />
+    </div>
+    {% endif %}
+    {% block chat %} {% endblock chat %}
+  </div>
+  <script>
+    let selectedUser;
+    function clickConv(element) {
+      document.getElementById('conv_id').value = element.id
+      let form = document.getElementById('form_id')
+      form.submit()
+    }
+
+    function addNewChat() {
+      let selectElement = document.getElementById('selectedUser');
+      document.getElementById('modalCloseBtn').click();
+      $.ajax({
+        url: '/addConv/',
+        type: "POST",
+        headers: {"X-CSRFToken": document.cookie.split('=')[1]},
+        data: {userId: selectElement.value },
+        success: (data) => {
+          alert(data);
+          window.location.reload()
+        },
+        error: (error) => {
+          alert(error)
+        }
+      });
+      // window.location.reload();
+    }
+  </script>
+</div>
+
+{% endblock content %}

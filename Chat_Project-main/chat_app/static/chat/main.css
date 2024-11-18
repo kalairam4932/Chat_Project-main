@@ -1,0 +1,16 @@
+.chat-item{
+  cursor: pointer;
+}
+
+.chat-item:hover{
+  background-color: white;
+}
+
+.sidebarItem{
+  cursor: pointer;
+}
+
+.loadingContent{
+  
+  
+}

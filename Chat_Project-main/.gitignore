@@ -1,0 +1,9 @@
+chat_app/__pycache__/
+
+chat_env/bin
+chat_env/lib
+chat_env/lib64
+
+
+*.cfg
+*.pyc

@@ -1,0 +1,142 @@
+{% extends "chat/index.html" %} {% load crispy_forms_tags %} {% block chat %}
+<div class="h-75">
+  <div>
+    {% for conversation in conversations %}
+    {% if conversation.conv_id == room_name %}
+
+    <span class="d-flex">
+      <a href="/home" class="mt-4 ml-3 mr-3"><i class="bi bi-box-arrow-left h3 " style="cursor: pointer;"></i></a>
+      <img class="rounded-circle" style="max-height: 80px; max-width: 80px; vertical-align: middle;"
+        src="{{conversation.secProfile}}" />
+      <span>
+        <p class="mt-3 pl-3 m-0" style="font-size: 14px;"><b>{{ conversation.secName }}</b></p>
+        <p class="mt-1 pl-3" style="font-size: 14px;color: #0cd45c;">Online</p>
+      </span>
+    </span>
+    <hr>
+    {% endif %}
+    {% endfor %}
+  </div>
+  <div class="h-100 p-1 rounded-sm rounded overflow-auto" style="overflow-y:auto">
+    <div id="chat-log">
+      {% if db_messages %}
+      {% for m in db_messages %}
+      {% if m.user == user.username %}
+      <div class="d-flex justify-content-end">
+        <div class="d-inline-flex justify-content-between rounded p-2 m-2"
+          style="background-color: #3a76f0; color: white; overflow-wrap: break-word;">
+          {% else %}
+          <div class="d-flex justify-content-start">
+            <div class="d-inline-flex justify-content-between rounded p-2 m-2"
+              style="background-color: #f1f5fe; overflow-wrap: break-word;">
+              {% endif %}
+
+              <p class="m-0 pr-5"> {{m.message}} </p>
+              <p class="m-0 "> {{m.created_at.time }} </p>
+            </div>
+          </div>
+
+          {% endfor %}
+          {% endif %}
+        </div>
+      </div>
+      <div class="d-flex p-3">
+        <input class="form-control mr-3" id="chat-message-input" type="text" size="100" /><br />
+        <input class="btn btn-primary" id="chat-message-submit" type="button" value="Send" />
+      </div>
+
+
+      {% block scripts %}
+      {{ room_name|json_script:"room-name" }}
+      {{ user.username|json_script:"user-name" }}
+      <script>
+        const roomName = JSON.parse(
+          document.getElementById('room-name').textContent
+        );
+        const userName = JSON.parse(
+          document.getElementById('user-name').textContent
+        );
+        console.log(userName)
+        const chatSocket = new WebSocket(
+          'ws://' + window.location.host + '/ws/chat/' + roomName + '/'
+        );
+
+        chatSocket.onmessage = function (e) {
+          const data = JSON.parse(e.data);
+          if (data.message) {
+            let date = new Date();
+            if (data.username == userName) {
+              let html = `<div class="d-flex justify-content-end">
+                        <div class= "d-inline-flex justify-content-between rounded p-2 m-2" 
+                            style="background-color: #3a76f0; color: white; overflow-wrap: break-word;">
+                            <p class="m-0 pr-5" > ${data.message} </p>
+                            <p class="m-0" > ${date.getHours()}: ${date.getMinutes()} </p>
+                        </div>
+                      </div>`
+              document.querySelector('#chat-log').innerHTML += html
+            }
+            else {
+              let html = `<div class="d-inline-flex justify-content-start">
+                        <div class="w-50 d-flex justify-content-between rounded p-2 m-2" 
+                            style="background-color: #f1f5fe; overflow-wrap: break-word;">
+                            <p class="m-0 pr-5" > ${data.message} </p>
+                            <p class="m-0" > ${date.getHours()}: ${date.getMinutes()} </p>
+                        </div>
+                      </div>`
+              document.querySelector('#chat-log').innerHTML += html
+            }
+
+
+
+            let myDiv = document.getElementById("chat-log-container");
+            myDiv.scrollTop = myDiv.scrollHeight;
+          }
+          else {
+            alert("Message was empty")
+          }
+
+        };
+
+        chatSocket.onclose = function (e) {
+          console.error('Chat socket closed unexpectedly');
+        };
+
+        document.querySelector('#chat-message-input').focus();
+        document.querySelector('#chat-message-input').onkeyup = function (e) {
+          if (e.keyCode === 13) {
+            // enter, return
+            document.querySelector('#chat-message-submit').click();
+          }
+        };
+
+        document.querySelector('#chat-message-submit').onclick = function (e) {
+          const messageInputDom = document.querySelector('#chat-message-input');
+          const message = messageInputDom.value;
+          chatSocket.send(
+            JSON.stringify({
+              message: message,
+              username: userName,
+              room: roomName,
+            })
+          );
+          messageInputDom.value = '';
+        };
+
+        function backToChat() {
+          $.ajax({
+            url: '/home/',
+            type: "GET",
+            headers: { "X-CSRFToken": document.cookie.split('=')[1] },
+            success: (data) => {
+              document.in
+            },
+            error: (error) => {
+              alert(error)
+            }
+          }
+          )
+        }
+      </script>
+      {% endblock scripts %}
+    </div>
+    {% endblock chat %}
